@@ -1,0 +1,10 @@
+.env
+.direnv
+result
+target
+build
+
+*.db
+
+# Ignore Gradle project-specific cache directory
+.gradle
