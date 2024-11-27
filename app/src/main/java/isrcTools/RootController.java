@@ -122,6 +122,10 @@ public class RootController {
 
   @FXML protected void changeSourcePlaylist(MouseEvent event) {
     Playlist playlist = sourcePlaylistList.getSelectionModel().getSelectedItem();
+    Clipboard clipboard = Clipboard.getSystemClipboard();
+    ClipboardContent content = new ClipboardContent();
+    content.putString(playlist.url);
+    clipboard.setContent(content);
     // get playlist and process to generic tracks
     spotify.fetchPlaylist(playlist);
   }
