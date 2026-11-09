@@ -1,4 +1,5 @@
 package isrcTools;
+
 import isrcTools.TrackProviders.*;
 
 import javafx.application.Application;
@@ -24,12 +25,14 @@ public class Main extends Application {
   public void start(Stage stage) throws Exception {
     FXMLLoader loader = new FXMLLoader();
     String prefix = System.getProperty("user.dir");
-    if (!prefix.endsWith("/app")) prefix += "/app";
+    if (!prefix.endsWith("/app")) {
+      prefix += "/app";
+    }
     Parent root = loader.load(new FileInputStream(prefix + "/src/main/java/isrcTools/Window.fxml"));
 
     RootController controller = loader.getController();
 
-    Scene scene = new Scene(root, 640, 480); 
+    Scene scene = new Scene(root, 640, 480);
     stage.setScene(scene);
     stage.show();
   }

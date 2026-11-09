@@ -1,4 +1,5 @@
 package isrcTools.TrackProviders;
+
 import isrcTools.TrackProvider;
 import isrcTools.Track;
 import isrcTools.Playlist;
@@ -22,7 +23,7 @@ import java.lang.Runtime;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-// using https://github.com/spotify-web-api-java/spotify-web-api-java 
+// using https://github.com/spotify-web-api-java/spotify-web-api-java
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
@@ -40,7 +41,8 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 
 public class Spotify extends TrackProvider {
   public static String providerSlug = "spotify";
-  public static String friendlyName = "Spotify"; 
+  public static String friendlyName = "Spotify";
+
   private static String clientId = "57b2453d652b4a75b68457106252f58e";
   private static int port = 9001;
   private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost:" + port);
@@ -52,23 +54,27 @@ public class Spotify extends TrackProvider {
   private static AuthorizationCodePKCERefreshRequest authorizationCodePKCERefreshRequest;
   private static Connection conn;
   private static Sqlite dbOps;
-  
+
   public Spotify(Sqlite dbOps) {
     this.dbOps = dbOps;
     this.conn = dbOps.conn;
     auth();
   }
 
-  public void removeFromPlaylist(String url, ArrayList<Track> tracks) {}
+  public void removeFromPlaylist(String url, ArrayList<Track> tracks) {
+  }
 
-  public void addToPlaylist(String url, ArrayList<Track> tracks) {}
+  public void addToPlaylist(String url, ArrayList<Track> tracks) {
+  }
 
   public String createPlaylist(Playlist playlist) {
     return "";
   }
 
   public ArrayList<Track> fetchPlaylist(Playlist playlist) {
-    if (playlist.providerSlug != this.providerSlug) return null;
+    if (playlist.providerSlug != this.providerSlug) {
+      return null;
+    }
     int offset = 0;
     GetPlaylistsItemsRequest getPlaylistsItemsRequest;
     ArrayList<Track> tracks = new ArrayList<Track>();
@@ -76,36 +82,43 @@ public class Spotify extends TrackProvider {
     try {
       while (true) {
         getPlaylistsItemsRequest = spotifyApi.getPlaylistsItems(playlist.providerId)
-          .limit(50)
-          .offset(offset)
-          .build();
+            .limit(50)
+            .offset(offset)
+            .build();
         Paging<PlaylistTrack> playlistTrackPaging = getPlaylistsItemsRequest.execute();
 
-        if (tracks.size() == playlistTrackPaging.getTotal()) return tracks;
-        else {
+        if (tracks.size() == playlistTrackPaging.getTotal()) {
+          return tracks;
+        } else {
           offset += 50;
-          for (PlaylistTrack trackP: playlistTrackPaging.getItems()) {
+          for (PlaylistTrack trackP : playlistTrackPaging.getItems()) {
             se.michaelthelin.spotify.model_objects.specification.Track track = (se.michaelthelin.spotify.model_objects.specification.Track) trackP.getTrack();
             Track t = new Track.TrackBuilder(conn)
-              .friendlyName(track.getName())
-              .isrc(track.getExternalIds().getExternalIds().get("isrc"))
-              .build();
+                .friendlyName(track.getName())
+                .isrc(track.getExternalIds().getExternalIds().get("isrc"))
+                .build();
 
             dbOps.insertTrackProviderLocation(t, providerSlug, track.getId(), track.getExternalUrls().get("spotify"));
             tracks.add(t);
             // create virtual playlist
-            dbOps.insertPlaylistEntry(playlist.playlistId.toString(), t.trackId.toString(), trackP.getAddedAt().toString());
+            dbOps.insertPlaylistEntry(playlist.playlistId.toString(),
+                t.trackId.toString(),
+                trackP.getAddedAt().toString());
           }
         }
       }
-    } catch (IOException | SpotifyWebApiException | ParseException e) {return null;}
+    } catch (IOException | SpotifyWebApiException | ParseException e) {
+      return null;
+    }
   }
 
   public String fetchTrackUrl(Track track) {
-    if (track.isrc == null) return null;
+    if (track.isrc == null) {
+      return null;
+    }
     SearchTracksRequest searchTracksRequest = spotifyApi.searchTracks("isrc:" + track.isrc)
-    .limit(1)
-    .build();
+        .limit(1)
+        .build();
     try {
       Paging<se.michaelthelin.spotify.model_objects.specification.Track> trackPaging = searchTracksRequest.execute();
       if (trackPaging.getTotal() == 1) {
@@ -116,36 +129,35 @@ public class Spotify extends TrackProvider {
     }
     return null;
   }
-  
+
   public ArrayList<Playlist> fetchPlaylistList() {
     GetListOfCurrentUsersPlaylistsRequest getListOfCurrentUsersPlaylistsRequest = spotifyApi
-    .getListOfCurrentUsersPlaylists()
-    .offset(0)
-    .build();
+        .getListOfCurrentUsersPlaylists()
+        .offset(0)
+        .build();
 
     ArrayList<PlaylistSimplified> providerPlaylists = new ArrayList<PlaylistSimplified>();
 
     ArrayList<Playlist> playlists = new ArrayList<Playlist>();
-    
+
     try {
       Paging<PlaylistSimplified> playlistSimplifiedPaging = getListOfCurrentUsersPlaylistsRequest.execute();
       int total = playlistSimplifiedPaging.getTotal();
-      for (PlaylistSimplified p: playlistSimplifiedPaging.getItems()) providerPlaylists.add(p);
+      for (PlaylistSimplified p : playlistSimplifiedPaging.getItems()) providerPlaylists.add(p);
       for (int offset = 50; offset < total; offset += 50) {
         playlistSimplifiedPaging = spotifyApi.getListOfCurrentUsersPlaylists()
-          .offset(offset)
-          .build()
-          .execute();
-        for (PlaylistSimplified p: playlistSimplifiedPaging.getItems()) providerPlaylists.add(p);
+            .offset(offset)
+            .build()
+            .execute();
+        for (PlaylistSimplified p : playlistSimplifiedPaging.getItems()) providerPlaylists.add(p);
       }
 
-      
 
-      for (PlaylistSimplified p: providerPlaylists) {
+      for (PlaylistSimplified p : providerPlaylists) {
         playlists.add(
-          new Playlist.PlaylistBuilder(conn, p.getId(), providerSlug, p.getExternalUrls().get("spotify"))
-            .friendlyName(p.getName())
-            .build()
+            new Playlist.PlaylistBuilder(conn, p.getId(), providerSlug, p.getExternalUrls().get("spotify"))
+                .friendlyName(p.getName())
+                .build()
         );
       }
     } catch (IOException | SpotifyWebApiException | ParseException e) {
@@ -154,8 +166,6 @@ public class Spotify extends TrackProvider {
 
     return playlists;
   }
-
-
 
 
   // Auth boilerplate
@@ -169,10 +179,10 @@ public class Spotify extends TrackProvider {
 
       System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
     } catch (IOException | SpotifyWebApiException | ParseException e) {
-     System.out.println("Error: " + e.getMessage());
+      System.out.println("Error: " + e.getMessage());
     }
   }
-  
+
   private void auth() {
     try {
       // 'borrowed' from https://www.appsdeveloperblog.com/pkce-code-verifier-and-code-challenge-in-java/ there is no way i am implementing this myself bruh
@@ -186,38 +196,41 @@ public class Spotify extends TrackProvider {
       messageDigest.update(bytes, 0, bytes.length);
       byte[] digest = messageDigest.digest();
       codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-    } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {}
-    
+    } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+    }
+
     this.spotifyApi = new SpotifyApi.Builder()
-      .setClientId(clientId)
-      .setRedirectUri(redirectUri)
-      .build();
+        .setClientId(clientId)
+        .setRedirectUri(redirectUri)
+        .build();
     AuthorizationCodeUriRequest authCodeUriReq = spotifyApi.authorizationCodePKCEUri(codeChallenge)
-      .scope("user-library-read,playlist-read-private,playlist-modify-private,user-library-modify")
-      .show_dialog(true)
-     .build();
+        .scope("user-library-read,playlist-read-private,playlist-modify-private,user-library-modify")
+        .show_dialog(true)
+        .build();
 
     URI uri = authCodeUriReq.execute();
     Desktop desktop = Desktop.getDesktop();
     try {
-      if (desktop.isSupported(Desktop.Action.BROWSE)) desktop.browse(uri);
-      else {
-        Runtime.getRuntime().exec(new String[] {"xdg-open", uri.toString()});
+      if (desktop.isSupported(Desktop.Action.BROWSE)) {
+        desktop.browse(uri);
+      } else {
+        Runtime.getRuntime().exec(new String[]{"xdg-open", uri.toString()});
       }
     } catch (IOException _) {
       System.out.println("Error opening uri; navigate manually: " + uri.toString());
     }
-  
+
     try {
       ServerSocket serverSocket = new ServerSocket(port);
       Socket clientSocket = serverSocket.accept();
       PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
       BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
       String authCode = in.readLine().split("code=| ")[2];
-    this.authorizationCodePKCERequest = spotifyApi
-      .authorizationCodePKCE(authCode, codeChallengeVerifier)
-      .build();
-    } catch (IOException e) {}
+      this.authorizationCodePKCERequest = spotifyApi
+          .authorizationCodePKCE(authCode, codeChallengeVerifier)
+          .build();
+    } catch (IOException e) {
+    }
 
     try {
       final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodePKCERequest.execute();
@@ -230,6 +243,6 @@ public class Spotify extends TrackProvider {
     }
 
     this.authorizationCodePKCERefreshRequest = spotifyApi.authorizationCodePKCERefresh()
-    .build();
+        .build();
   }
 }

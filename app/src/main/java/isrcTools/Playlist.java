@@ -16,7 +16,7 @@ public class Playlist {
   public String providerSlug;
   private static Connection conn;
   public String createDate;
-  
+
 
   private Playlist(PlaylistBuilder builder) {
     this.friendlyName = builder.friendlyName;
@@ -76,14 +76,18 @@ public class Playlist {
           this.playlistId = UUID.randomUUID();
           String sql = "insert into playlists(playlistId, createDate) values(?, ?)";
           PreparedStatement pstmt = conn.prepareStatement(sql);
-          if (this.createDate == null) this.createDate = LocalDateTime.now().toString();
+          if (this.createDate == null) {
+            this.createDate = LocalDateTime.now().toString();
+          }
           pstmt.setString(1, this.playlistId.toString());
           pstmt.setString(2, this.createDate);
           pstmt.executeUpdate();
           // create playlist provider location
           sql = "insert into playlistLocations(playlistId, providerSlug, providerUrl, playlistName, providerId) values(?, ?, ?, ?, ?)";
           pstmt = conn.prepareStatement(sql);
-          if (this.friendlyName == null) this.friendlyName = "New Playlist from " + this.createDate ;
+          if (this.friendlyName == null) {
+            this.friendlyName = "New Playlist from " + this.createDate;
+          }
           pstmt.setString(1, this.playlistId.toString());
           pstmt.setString(2, this.providerSlug);
           pstmt.setString(3, this.url);
@@ -91,8 +95,7 @@ public class Playlist {
           pstmt.setString(5, this.providerId);
           pstmt.executeUpdate();
         }
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
         System.out.println(e.getMessage());
       }
       return new Playlist(this);

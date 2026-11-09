@@ -44,9 +44,11 @@ public class YT extends TrackProvider {
     auth();
   }
 
-  public void removeFromPlaylist(String url, ArrayList<Track> tracks) {}
+  public void removeFromPlaylist(String url, ArrayList<Track> tracks) {
+  }
 
-  public void addToPlaylist(String url, ArrayList<Track> tracks) {}
+  public void addToPlaylist(String url, ArrayList<Track> tracks) {
+  }
 
   // true = found, false = not found
   private boolean cacheTrackProviderId(Track track) {
@@ -57,29 +59,27 @@ public class YT extends TrackProvider {
       System.out.println("Did not find " + track.friendlyName + " for " + providerSlug + " in cache");
       try {
         SearchListResponse res = youtube.search()
-          .list(List.of("snippet"))
-          .setQ(track.isrc)
-          .setType(List.of("video"))
-          .setMaxResults(1L)
-          .execute();
+            .list(List.of("snippet"))
+            .setQ(track.isrc)
+            .setType(List.of("video"))
+            .setMaxResults(1L)
+            .execute();
         List<SearchResult> items = res.getItems();
         if (!items.isEmpty()) {
           SearchResult item = items.get(0);
           providerId = item.getId().getVideoId();
           dbOps.insertTrackProviderLocation(track, this.providerSlug,
-            providerId, "https://www.youtube.com/watch?v=" + providerId);
+              providerId, "https://www.youtube.com/watch?v=" + providerId);
           return true;
-        }
-        else {
+        } else {
           System.out.println("Did not find " + track.friendlyName + " on " + providerSlug);
           return false;
         }
-     } catch (IOException e) {
-      return false;
-     }
-    }
-    else {
-      System.out.println("Found " + track.friendlyName + " for " + providerSlug +" in cache");
+      } catch (IOException e) {
+        return false;
+      }
+    } else {
+      System.out.println("Found " + track.friendlyName + " for " + providerSlug + " in cache");
       return true;
     }
   }
@@ -91,12 +91,11 @@ public class YT extends TrackProvider {
     ArrayList<Track> tracks = dbOps.fetchPlaylistEntries(playlist);
 
     ArrayList<String> urls = new ArrayList<String>();
-    
-    for (Track track: tracks) {
+
+    for (Track track : tracks) {
       if (!cacheTrackProviderId(track)) {
         missingTracks.put(track.isrc, track.friendlyName);
-      }
-      else {
+      } else {
         //String trackProviderId = dbOps.fetchTrackProviderId(track, providerSlug);
         String url = dbOps.fetchTrackProviderUrl(track, providerSlug);
         urls.add(url);
@@ -131,7 +130,7 @@ public class YT extends TrackProvider {
       try {
         created = youtube.playlists().insert(List.of("snippet", "status"), ytPlaylist).execute();
         playlistProviderId = created.getId();
-        url += playlistProviderId; 
+        url += playlistProviderId;
         Playlist ytList = new Playlist.PlaylistBuilder(conn, playlistProviderId, this.providerSlug, url)
           .friendlyName(playlist.friendlyName)
           .uuid(playlist.playlistId)
@@ -140,14 +139,13 @@ public class YT extends TrackProvider {
       } catch (IOException e) {
         System.out.println(e.getMessage());
       }
-          
+
     }*/
-   
-    for (Track track: tracks) {
+
+    for (Track track : tracks) {
       if (!cacheTrackProviderId(track)) {
         missingTracks.put(track.isrc, track.friendlyName);
-      }
-      else {
+      } else {
         String trackProviderId = dbOps.fetchTrackProviderId(track, providerSlug);
       }
     }
@@ -173,8 +171,8 @@ public class YT extends TrackProvider {
     }*/
 
     System.out.println("Missing tracks:\n" + missingTracks.entrySet());
-    
-    
+
+
     return "";
   }
 
@@ -205,6 +203,6 @@ public class YT extends TrackProvider {
           .build();
     } catch (IOException | GeneralSecurityException e) {
       System.out.println(e.getMessage());
-    } 
+    }
   }
 }

@@ -11,7 +11,7 @@ public class Track {
   public String isrc;
   public String friendlyName;
   public static Connection conn;
-  
+
   private Track(TrackBuilder builder) {
     this.isrc = builder.isrc;
     this.friendlyName = builder.friendlyName;
@@ -54,8 +54,7 @@ public class Track {
           while (rs.next()) {
             this.trackId = UUID.fromString(rs.getString("trackId"));
           }
-        }
-        else if (this.trackId == null && this.friendlyName != null) {
+        } else if (this.trackId == null && this.friendlyName != null) {
           String sql = "select trackId from tracks where friendlyName = ?";
           PreparedStatement pstmt = conn.prepareStatement(sql);
           pstmt.setString(1, this.friendlyName);
@@ -73,8 +72,7 @@ public class Track {
           pstmt.setString(3, this.friendlyName);
           int diff = pstmt.executeUpdate();
         }
-      }
-      catch (SQLException e) {
+      } catch (SQLException e) {
         System.out.println(e.getMessage());
       }
       return new Track(this);
